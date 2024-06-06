@@ -1,0 +1,16 @@
+services:
+  my-classifier-container:
+    image: my-classifier:1.0
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./images:/app/images
+      - ./tensorboard:/app/tensorboard
+  tensorboard:
+    image: pccl/tensorboard
+    ports:
+      - "6006:6006"
+    volumes:
+      - ./tensorboard:/app/tensorboard
+    command: tensorboard --logdir=/app/tensorboard --bind_all
