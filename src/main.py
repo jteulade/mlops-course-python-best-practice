@@ -3,19 +3,23 @@ import os
 import torch
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
-from torchvision import transforms, models
+from torchvision import models, transforms
 from torchvision.models.resnet import ResNet18_Weights
 
 
 class ImageData:
-    def __init__(self, DIR: str):
-        self.D = DIR
+    def __init__(self, folder: str):
+        self.D = folder
 
-    def LoadImages(self) -> list:
+    def load_images(self) -> list:
+        """
+        Load images
+        :return: the images list
+        """
         inner_images = []
-        for F in os.listdir(self.D):
-            if F.endswith(".jpg") or F.endswith(".png"):
-                inner_images.append(Image.open(os.path.join(self.D, F)))
+        for f in os.listdir(self.D):
+            if f.endswith(".jpg") or f.endswith(".png"):
+                inner_images.append(Image.open(os.path.join(self.D, f)))
         return inner_images
 
 
@@ -23,7 +27,12 @@ class ImgProcess:
     def __init__(self, size: int):
         self.s = size
 
-    def resize_and_GRAY(self, img_list: list) -> list:
+    def resize_and_gray(self, img_list: list) -> list:
+        """
+        Resize and gray the image
+        :param img_list: the images list
+        :return: the list of transformed images
+        """
         p_images = []
         for img in img_list:
             t = transforms.Compose(
@@ -45,7 +54,12 @@ class Predictor:
         self.mdl = models.resnet18(weights=ResNet18_Weights.DEFAULT)
         self.mdl.eval()
 
-    def Predict_Img(self, inner_images: list) -> list[int | float | bool]:
+    def predict_img(self, inner_images: list) -> list[int | float | bool]:
+        """
+        Predict a list of images
+        :param inner_images:  the list of images
+        :return: the list of predictions
+        """
         tmp_results = []
         for img_tensor in inner_images:
             inner_pred = self.mdl(img_tensor.unsqueeze(0))
@@ -57,13 +71,13 @@ if __name__ == "__main__":
     writer = SummaryWriter("tensorboard/runs/image_classification")
 
     loader = ImageData("../images/")
-    images = loader.LoadImages()
+    images = loader.load_images()
 
     processor = ImgProcess(256)
-    preprocessed_tensor = processor.resize_and_GRAY(images)
+    preprocessed_tensor = processor.resize_and_gray(images)
 
     predictor = Predictor()
-    results = predictor.Predict_Img(preprocessed_tensor)
+    results = predictor.predict_img(preprocessed_tensor)
 
     for i, tensor in enumerate(preprocessed_tensor):
         writer.add_image(f"{results[i]}", tensor, 0)
